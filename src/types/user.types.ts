@@ -1,0 +1,1 @@
+export type VoteTypes = 'YES' | 'NO' | 'ABSTAIN'
