@@ -1,26 +1,28 @@
 import { Document, Schema, model } from 'mongoose';
 import { VoteTypes } from '../types/user.types';
 
-const proposition = new Schema({
+const vote = new Schema({
   id: {type: Number, required: true, unique: true},
-  vote: {type: String, required: true}
+  vote: {type: String, required: true},
+  weight: {type: Number, required: true}
 });
 
 const user = new Schema({
   id: { type: Number, required: true, unique: true },
   tokenBalance: {type: String, required: false},
-  votes: [proposition]
+  votes: [vote]
 }, { collection: 'users' });
 
-interface Proposition{
+interface Vote{
     id: number,
-    vote: VoteTypes
+    vote: VoteTypes,
+    weight: number
 }
 
 interface UserModel extends Document {
   id: number
   tokenBalance: string
-  votes: [Proposition]
+  votes: [Vote]
 }
 
 export { UserModel };
