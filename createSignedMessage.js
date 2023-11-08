@@ -5,7 +5,7 @@ const axios = require('axios');
 const wallet = ethers.Wallet.createRandom();
 
 async function main(){
-  const vote = `${uuidv4()}.01.${uuidv4()}`;
+  const vote = `${uuidv4()}.NO.${uuidv4()}`;
   const signedMessage = await wallet.signMessage(vote);
     
   console.log(signedMessage, wallet.address, vote);

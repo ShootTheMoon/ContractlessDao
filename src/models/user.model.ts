@@ -2,7 +2,7 @@ import { Document, Schema, model } from 'mongoose';
 import { VoteTypes } from '../types/user.types';
 
 const vote = new Schema({
-  proposal: {type: Number, required: true, unique: true},
+  proposal: {type: String, required: true, sparse: true},
   vote: {type: String, required: true},
   weight: {type: String, required: true},
   nonce: {type: String, required: true, unique: true}

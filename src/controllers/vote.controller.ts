@@ -1,38 +1,43 @@
 import { ethers } from 'ethers';
 import express from 'express';
-import user from '../models/user.model';
+import User from '../services/user.service';
+import Nonce from '../services/nonce.service';
+import { isVote } from '../types/user.types';
 
 export async function post_castVote(req: express.Request, res: express.Response) {
   const { walletAddress, voteSignature, vote } = req.body;
 
   const signingAddress = ethers.verifyMessage(vote, voteSignature);
 
+  // Check if signature is valid
   if (signingAddress.toLowerCase() == walletAddress.toLowerCase()) {
     const proposal = vote.split('.')[0];
     const decision = vote.split('.')[1];
-    const nonce = vote.split('.')[2];
 
-    // Create user if not found
-    let userDoc = await user.findOne({ walletAddress: walletAddress.toLowerCase() });
-    if (!(userDoc)){
-      userDoc = await user.create({ walletAddress: walletAddress.toLowerCase(), tokenBalance: '0' });
-    } 
-
-    if (await user.findOne({ 'walletAddress': walletAddress, 'vote.proposal': proposal })) {
-      res.send('Already voted my dude');
-      return;
-    } else {
-      userDoc.votes.push({
-        proposal: proposal,
-        vote: decision,
-        weight: userDoc.tokenBalance,
-        nonce: nonce
-      });
-      await userDoc.save();
-      res.send('Vote has been cast');
-      return;
+    // check if decision is valid type
+    if(!isVote(decision)){
+      return res.send({err: 'invalid vote'});
     }
 
+    const nonce = new Nonce(vote.split('.')[2]);
+
+    // check if nonce is type uuid
+    if(!nonce.nonceValidity()){
+      return res.send({err: 'bad nonce format'});
+    }
+
+    // check if nonce has been used before
+    if(!(await nonce.uniqueNonce())){
+      return res.send({err: 'duplicate nonce'});
+    }
+    
+    const user = new User(walletAddress);
+
+    await user.init();
+
+    const voted = await user.castVote(proposal, decision, nonce.nonce);
+
+    return res.send(voted);
   }
-  res.send('you trying to hack my nigga??');
+  return res.send('you trying to hack my g??');
 }
