@@ -2,21 +2,23 @@ import { Document, Schema, model } from 'mongoose';
 import { VoteTypes } from '../types/user.types';
 
 const vote = new Schema({
-  id: {type: Number, required: true, unique: true},
+  proposal: {type: Number, required: true, unique: true},
   vote: {type: String, required: true},
-  weight: {type: Number, required: true}
+  weight: {type: String, required: true},
+  nonce: {type: String, required: true, unique: true}
 });
 
 const user = new Schema({
-  id: { type: Number, required: true, unique: true },
-  tokenBalance: {type: String, required: false},
+  walletAddress: { type: String, required: true, unique: true },
+  tokenBalance: {type: String, required: true},
   votes: [vote]
 }, { collection: 'users' });
 
 interface Vote{
-    id: number,
+    proposal: string,
     vote: VoteTypes,
-    weight: number
+    weight: string,
+    nonce: string
 }
 
 interface UserModel extends Document {
