@@ -5,7 +5,7 @@ const vote = new Schema({
   proposal: {type: String, required: true, sparse: true},
   vote: {type: String, required: true},
   weight: {type: String, required: true},
-  nonce: {type: String, required: true, unique: true}
+  nonce: {type: String, required: true, sparse: true}
 });
 
 const user = new Schema({

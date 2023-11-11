@@ -16,19 +16,19 @@ export async function post_castVote(req: express.Request, res: express.Response)
 
     // check if decision is valid type
     if(!isVote(decision)){
-      return res.send({err: 'invalid vote'});
+      return res.send({voted: false, reason: 'Invalid vote'});
     }
 
     const nonce = new Nonce(vote.split('.')[2]);
 
     // check if nonce is type uuid
     if(!nonce.nonceValidity()){
-      return res.send({err: 'bad nonce format'});
+      return res.send({voted: false, reason: 'Invalid nonce format'});
     }
 
     // check if nonce has been used before
     if(!(await nonce.uniqueNonce())){
-      return res.send({err: 'duplicate nonce'});
+      return res.send({voted: false, reason: 'Duplicate nonce'});
     }
     
     const user = new User(walletAddress);
@@ -39,5 +39,5 @@ export async function post_castVote(req: express.Request, res: express.Response)
 
     return res.send(voted);
   }
-  return res.send('you trying to hack my g??');
+  return res.send({voted: false, reason: 'Wallet signature mismatch'});
 }

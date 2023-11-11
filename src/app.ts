@@ -26,3 +26,6 @@ app.use('/vote', voteRouter);
 app.listen(3000, () => {
   console.log('Server running');
 });
+
+// For testing
+export default app;
