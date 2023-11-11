@@ -8,7 +8,7 @@
     "build": "tsc",
     "dev": "set ENV=development&& nodemon src/app.ts",
     "dev-unix": "export ENV=development && nodemon src/app.ts",
-    "test": "mocha ./dist/test",
+    "test": "mocha --timeout 20000 ./dist/test",
     "create-proposal-test": "export ENV=development && node dist/scripts/adminTools.js create-proposal",
     "create-proposal": "export ENV=production && node dist/scripts/adminTools.js create-proposal",
     "vote-fresh": "export ENV=development && node dist/scripts/adminTools.js vote-fresh",

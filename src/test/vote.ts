@@ -1,7 +1,5 @@
 import ganache from 'ganache-cli';
-import express from 'express';
 import { ethers } from 'ethers';
-import axios from 'axios';
 import dotenv from 'dotenv';
 import { before, describe, it } from 'mocha';
 dotenv.config();
@@ -27,66 +25,58 @@ chai.use(chaiHttp);
 
 mongoose.connect(`mongodb+srv://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_SERVER}/${DATABASE_TEST}`);
 
-describe('Vote Tests', async () => {
+describe('Vote Tests', async function() {
   let provider: ethers.JsonRpcProvider;
   const accountList: any[] = [];
 
-  before('Start fork', () => {
-    // Start the eth fork
-    // Start fork on port
-    server.listen(port, async (err: any, blockchain: any) => {
-      console.log('Forking successful on port:', port);
-      
-      provider = new ethers.JsonRpcProvider(`http://localhost:${port}`);
-      
-      // Retrieve accounts
-      const accounts = blockchain ? blockchain.accounts : null;
-      if (accounts) {
-        Object.keys(accounts).forEach((account) => {
-          accountList.push(accounts[account]);
-        });
-      }
+  before('Start fork', function() {
+    return new Promise<void>((resolve) => {
+      server.listen(port, async (err: any, blockchain: any) => {
+        console.log('Forking successful on port:', port);
+        
+        provider = new ethers.JsonRpcProvider(`http://localhost:${port}`);
+        
+        // Retrieve accounts
+        const accounts = blockchain ? blockchain.accounts : null;
+        if (accounts) {
+          Object.keys(accounts).forEach((account) => {
+            accountList.push(accounts[account]);
+          });
+        }
+
+        resolve();
+      });
+
     });
+   
 
   });   
 
-  beforeEach('Clear Test Database Collection', () => {
+  beforeEach('Clear Test Database Collection', function() {
     return new Promise<void>((resolve) => {
       mongoose.connection.dropCollection('users').then(resolve); 
     });
 
   });
 
-  beforeEach('Create a new proposal', (done) => {
-    return new Promise<void>((resolve) => {
-      mongoose.connection.dropCollection('proposals').then(async () => {
-        const activeProposals = await proposal.find({ active: true });
-      
-        for (const active of activeProposals) {
-          active.active = false;
-          await active.save();
-        }
-        
-        await proposal.create({
-          id: uuidv4(),
-          proposal: 'Test proposal',
-          active: true,
-          votes: {
-            yes: 0,
-            yesWeight: '0',
-            no: 0,
-            noWeight: '0',
-            abstain: 0,
-            abstainWeight: '0',
-          },
-        });
+  beforeEach('Create a new proposal', async function() {
 
-        resolve();
-      }); 
-      done();
+    await mongoose.connection.dropCollection('proposals');
+
+    await proposal.create({
+      id: uuidv4(),
+      proposal: 'Test proposal',
+      active: true,
+      votes: {
+        yes: 0,
+        yesWeight: '0',
+        no: 0,
+        noWeight: '0',
+        abstain: 0,
+        abstainWeight: '0',
+      },
     });
-
-  });   
+  });
 
 
   it('Successfully Vote From Fresh Wallet', async function() {
@@ -95,55 +85,119 @@ describe('Vote Tests', async () => {
 
     // Get proposal
     const activeProposal = await proposal.findOne({ active: true });
-    console.log(activeProposal);
+
+    // Check that proposal exists
     assert.notEqual(activeProposal, null);
+
     // Generate random nonce
     const nonce = uuidv4();
 
     const vote = `${activeProposal!.id}.YES.${nonce}`;
     const signedMessage = await account.signMessage(vote);
     
-    chai.request(app).post('/vote/cast').send({
+    const res = await chai.request(app).post('/vote/cast').send({
       vote: vote,
       walletAddress: account.address,
       voteSignature: signedMessage,
-    }).end((err, res) => {
-      console.log(res.body);
-      assert.equal(res.body.voted, true);
     });
+
+    assert.deepEqual(res.body, { voted: true, reason: 'Voted' });
   });
 
   it('Revoke Second Vote From Fresh Wallet On Same Proposal With Different Nonce', async function() {
-    // // Create wallet
-    // const account = new ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+    // Create wallet
+    const account = new ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
 
-    // // Get proposal
-    // const activeProposal = await proposal.findOne({ active: true });
-    // assert.notEqual(activeProposal, null);
-    // // Generate random nonce
-    // const nonce = uuidv4();
+    // Get proposal
+    const activeProposal = await proposal.findOne({ active: true });
 
-    // const vote1 = `${activeProposal!.id}.YES.${nonce}`;
-    // const signedMessage1 = await account.signMessage(vote1);
+    // Check that proposal exists
+    assert.notEqual(activeProposal, null);
 
-    // const vote2 = `${activeProposal!.id}.YES.${nonce}`;
-    // const signedMessage2 = await account.signMessage(vote1);
+    // Generate random nonce
+    const nonce1 = uuidv4();
     
-    // const res1 = await chai.request(app).post('/vote/cast').send({
-    //   vote: vote1,
-    //   walletAddress: account.address,
-    //   voteSignature: signedMessage1,
-    // });
+    const vote1 = `${activeProposal!.id}.YES.${nonce1}`;
+    const signedMessage1 = await account.signMessage(vote1);
+    
+    // Generate random nonce
+    const nonce2 = uuidv4();
 
-    // assert.equal(res1.body.voted, true);
+    const vote2 = `${activeProposal!.id}.YES.${nonce2}`;
+    const signedMessage2 = await account.signMessage(vote2);
+    
+    const res1 = await chai.request(app).post('/vote/cast').send({
+      vote: vote1,
+      walletAddress: account.address,
+      voteSignature: signedMessage1,
+    });
 
-    // const res2 = await chai.request(app).post('/vote/cast').send({
-    //   vote: vote2,
-    //   walletAddress: account.address,
-    //   voteSignature: signedMessage2,
-    // });
+    assert.deepEqual(res1.body, { voted: true, reason: 'Voted' });
 
-    // assert.equal(res2.body.voted, false);
+    const res2 = await chai.request(app).post('/vote/cast').send({
+      vote: vote2,
+      walletAddress: account.address,
+      voteSignature: signedMessage2,
+    });
+
+    assert.deepEqual(res2.body, { voted: false, reason: 'Already voted' });
+  });
+
+  it('Revoke Second Vote From Fresh Wallet On Different Proposal With Same Nonce', async function(){
+    // Create wallet
+    const account = new ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+
+    // Get proposal
+    const activeProposal1 = await proposal.findOne({ active: true });
+    
+    // Check that proposal exists
+    assert.notEqual(activeProposal1, null);
+    
+    // Generate random nonce
+    const nonce = uuidv4();
+
+    const vote1 = `${activeProposal1!.id}.YES.${nonce}`;
+    const signedMessage1 = await account.signMessage(vote1);
+
+    const res1 = await chai.request(app).post('/vote/cast').send({
+      vote: vote1,
+      walletAddress: account.address,
+      voteSignature: signedMessage1,
+    });
+    assert.deepEqual(res1.body, { voted: true, reason: 'Voted' });
+
+    await mongoose.connection.dropCollection('proposals');
+
+    await proposal.create({
+      id: uuidv4(),
+      proposal: 'Test proposal',
+      active: true,
+      votes: {
+        yes: 0,
+        yesWeight: '0',
+        no: 0,
+        noWeight: '0',
+        abstain: 0,
+        abstainWeight: '0',
+      },
+    });
+
+    // Get proposal
+    const activeProposal2 = await proposal.findOne({ active: true });
+    
+    // Check that proposal exists
+    assert.notEqual(activeProposal2, null);
+
+    const vote2 = `${activeProposal1!.id}.YES.${nonce}`;
+    const signedMessage2 = await account.signMessage(vote2);
+
+    const res2 = await chai.request(app).post('/vote/cast').send({
+      vote: vote2,
+      walletAddress: account.address,
+      voteSignature: signedMessage2,
+    });
+
+    assert.deepEqual(res2.body, { voted: false, reason: 'Duplicate nonce' });
   });
 });
 
