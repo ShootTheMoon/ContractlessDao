@@ -22,7 +22,7 @@ interface Vote{
 }
 
 interface UserModel extends Document {
-  id: number
+  walletAddress: string
   tokenBalance: string
   votes: [Vote]
 }

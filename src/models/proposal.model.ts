@@ -1,5 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
-import { uuid } from 'uuidv4';
+import { v4 as uuidv4 } from 'uuid';
 
 const votes = new Schema({
   yes: {type: Number, required: true},
@@ -29,7 +29,7 @@ interface Votes {
 
 
 interface ProposalModel extends Document {
-    id: typeof uuid,
+    id: typeof uuidv4,
     proposal: string,
     active: boolean,
     votes: Votes

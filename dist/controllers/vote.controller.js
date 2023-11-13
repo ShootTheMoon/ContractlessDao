@@ -10,7 +10,7 @@ const nonce_service_1 = __importDefault(require("../services/nonce.service"));
 const user_types_1 = require("../types/user.types");
 async function post_castVote(req, res) {
     const { walletAddress, voteSignature, vote } = req.body;
-    const signingAddress = ethers_1.ethers.verifyMessage(vote, voteSignature);
+    const signingAddress = ethers_1.ethers.utils.verifyMessage(vote, voteSignature);
     // Check if signature is valid
     if (signingAddress.toLowerCase() == walletAddress.toLowerCase()) {
         const proposal = vote.split('.')[0];
@@ -22,7 +22,7 @@ async function post_castVote(req, res) {
         const nonce = new nonce_service_1.default(vote.split('.')[2]);
         // check if nonce is type uuid
         if (!nonce.nonceValidity()) {
-            return res.send({ voted: false, reason: 'Invalid nonce format' });
+            return res.send({ voted: false, reason: 'Invalid nonce' });
         }
         // check if nonce has been used before
         if (!(await nonce.uniqueNonce())) {
@@ -33,7 +33,7 @@ async function post_castVote(req, res) {
         const voted = await user.castVote(proposal, decision, nonce.nonce);
         return res.send(voted);
     }
-    return res.send({ voted: false, reason: 'Wallet signature mismatch' });
+    return res.send({ voted: false, reason: 'Invalid wallet signature' });
 }
 exports.post_castVote = post_castVote;
 //# sourceMappingURL=vote.controller.js.map

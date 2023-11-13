@@ -8,7 +8,8 @@
     "build": "tsc",
     "dev": "set ENV=development&& nodemon src/app.ts",
     "dev-unix": "export ENV=development && nodemon src/app.ts",
-    "test": "mocha --timeout 20000 ./dist/test",
+    "test": "set FORK=test&& mocha --timeout 20000 ./dist/test",
+    "test-unix": "export FORK=test&& mocha --timeout 20000 ./dist/test",
     "create-proposal-test": "export ENV=development && node dist/scripts/adminTools.js create-proposal",
     "create-proposal": "export ENV=production && node dist/scripts/adminTools.js create-proposal",
     "vote-fresh": "export ENV=development && node dist/scripts/adminTools.js vote-fresh",
@@ -21,6 +22,7 @@
     "@types/mocha": "^10.0.4",
     "@types/node": "^20.5.7",
     "@types/prompt": "^1.1.8",
+    "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
     "@typescript-eslint/parser": "^6.5.0",
     "axios": "^1.6.0",
@@ -38,9 +40,10 @@
   },
   "dependencies": {
     "dotenv": "^16.3.1",
-    "ethers": "^6.7.1",
+    "ethers": "^5.7",
     "express": "^4.18.2",
     "mongoose": "^7.5.0",
-    "uuidv4": "^6.2.13"
+    "uuid": "^9.0.1",
+    "web3-providers-ws": "^4.0.7"
   }
 }

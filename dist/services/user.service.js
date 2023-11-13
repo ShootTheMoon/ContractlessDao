@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const user_model_1 = __importDefault(require("../models/user.model"));
 const proposal_model_1 = __importDefault(require("../models/proposal.model"));
-const web3Provider_1 = __importDefault(require("../utils/web3Provider"));
+const app_1 = require("../app");
 const ethers_1 = require("ethers");
 const abi = [
     // Read-Only Functions
@@ -78,8 +78,14 @@ class User {
         return { voted: true, reason: 'Voted' };
     }
     async getTokenBalance() {
-        const contract = new ethers_1.Contract(TOKEN_ADDRESS, abi, web3Provider_1.default);
-        return await contract.balanceOf(this._walletAddress);
+        const contract = new ethers_1.Contract(TOKEN_ADDRESS, abi, app_1.web3Wss.provider);
+        try {
+            return await contract.balanceOf(this._walletAddress);
+        }
+        catch (err) {
+            console.log(err);
+            return '0';
+        }
     }
     async getOrCreateUserDocument() {
         // Create user if not found

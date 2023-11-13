@@ -1,1 +1,1 @@
-{"version":3,"file":"web3Provider.js","sourceRoot":"","sources":["../../src/utils/web3Provider.ts"],"names":[],"mappings":";;AAAA,mCAAgC;AAEhC,MAAM,EAAC,YAAY,EAAC,GAAG,OAAO,CAAC,GAAG,CAAC;AAEnC,MAAM,cAAc,GAAG,IAAI,eAAM,CAAC,eAAe,CAAC,YAAY,CAAC,CAAC;AAEhE,kBAAe,cAAc,CAAC"}
+{"version":3,"file":"web3Provider.js","sourceRoot":"","sources":["../../src/utils/web3Provider.ts"],"names":[],"mappings":";;AAAA,mCAAgC;AAEhC,MAAM,EAAC,OAAO,EAAC,GAAG,OAAO,CAAC,GAAG,CAAC;AAE9B,MAAM,cAAc,GAAG,IAAI,eAAM,CAAC,iBAAiB,CAAC,OAAO,CAAC,CAAC;AAE7D,kBAAe,cAAc,CAAC"}

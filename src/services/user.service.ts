@@ -1,7 +1,7 @@
 import user, { UserModel } from '../models/user.model';
 import proposal from '../models/proposal.model';
 import { VoteTypes } from '../types/user.types';
-import ethersProvider from '../utils/web3Provider';
+import {web3Wss} from '../app';
 import { Contract } from 'ethers';
 
 const abi = [
@@ -92,8 +92,14 @@ export default class User {
   }
 
   async getTokenBalance(): Promise<string> {
-    const contract = new Contract(TOKEN_ADDRESS, abi, ethersProvider);
-    return await contract.balanceOf(this._walletAddress);
+    const contract = new Contract(TOKEN_ADDRESS, abi, web3Wss.provider);
+    try{
+      return await contract.balanceOf(this._walletAddress);
+    }catch(err){
+      console.log(err);
+      return '0';
+    }
+
   }
 
   async getOrCreateUserDocument(): Promise<UserModel> {

@@ -7,7 +7,7 @@ import { isVote } from '../types/user.types';
 export async function post_castVote(req: express.Request, res: express.Response) {
   const { walletAddress, voteSignature, vote } = req.body;
 
-  const signingAddress = ethers.verifyMessage(vote, voteSignature);
+  const signingAddress = ethers.utils.verifyMessage(vote, voteSignature);
 
   // Check if signature is valid
   if (signingAddress.toLowerCase() == walletAddress.toLowerCase()) {
@@ -23,7 +23,7 @@ export async function post_castVote(req: express.Request, res: express.Response)
 
     // check if nonce is type uuid
     if(!nonce.nonceValidity()){
-      return res.send({voted: false, reason: 'Invalid nonce format'});
+      return res.send({voted: false, reason: 'Invalid nonce'});
     }
 
     // check if nonce has been used before
@@ -39,5 +39,5 @@ export async function post_castVote(req: express.Request, res: express.Response)
 
     return res.send(voted);
   }
-  return res.send({voted: false, reason: 'Wallet signature mismatch'});
+  return res.send({voted: false, reason: 'Invalid wallet signature'});
 }
