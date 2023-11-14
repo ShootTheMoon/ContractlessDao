@@ -4,7 +4,6 @@ import { ethers } from 'ethers';
 import dotenv from 'dotenv';
 import { before, describe, it } from 'mocha';
 dotenv.config();
-import proposal from '../models/proposal.model';
 import { v4 as uuidv4 } from 'uuid';
 import assert from 'assert';
 import mongoose from 'mongoose';
@@ -50,6 +49,12 @@ async function mineBlock() {
     jsonrpc: '2.0',
     method: 'evm_mine',
     id: new Date().getTime()
+  });
+}
+
+function promiseTimeout(delay: number) {
+  return new Promise(function (resolve, reject) {
+    setTimeout(resolve, delay);
   });
 }
 
@@ -102,14 +107,18 @@ describe('Vote Tests', async function() {
 
     const usdcWhaleSigner = provider!.getSigner(USDC_WHALE_ACCOUNT); // Get the unlocked whale signer
     const usdcContract = new ethers.Contract(TOKEN_ADDRESS, abi, usdcWhaleSigner); // USDC contract
-    await usdcContract.transfer(accountList[0].address, '10000'); // Send X tokens to account 0
+    await usdcContract.transfer(accountList[0].address, '1000000'); // Send X tokens to account 0
   });
 
   beforeEach('Clear Test Database Collection', async function() {
     await mongoose.connection.dropCollection('users');
   });
 
-  beforeEach('Create a new proposal', async function() {
+  beforeEach('Clear Test Database Collection', async function() {
+    await mongoose.connection.dropCollection('users');
+  });
+
+  beforeEach('Drop All Proposals', async function() {
     await mongoose.connection.dropCollection('proposals');
   });
 
@@ -508,8 +517,127 @@ describe('Vote Tests', async function() {
     
     assert.equal(votes.no, 0);
     assert.equal(votes.noWeight, '0');
-    
+
     assert.deepEqual(res.body, { voted: false, reason: 'Invalid nonce' });
+  });
+
+  it('Update Vote Weight After Token Transfer To Unvoted Wallet', async function() {
+    const TOKENS_TO_SEND = '5000';
+    // Create wallet
+    const account = new ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+
+    // Get proposal
+    const activeProposal = new ProposalHelper;
+    await activeProposal.init();
+
+    // Check that proposal exists
+    assert.notEqual(activeProposal.id, null);
+
+    // Generate random nonce
+    const nonce = uuidv4();
+
+    const vote = `${activeProposal.id}.YES.${nonce}`;
+    const signedMessage = await account.signMessage(vote);
+    
+    const res = await chai.request(app).post('/vote/cast').send({
+      vote: vote,
+      walletAddress: account.address,
+      voteSignature: signedMessage,
+    });
+
+    const tokenBalance1 = await getTokenBalance(account.address, provider!);
+    const votes1 = await activeProposal.getVotes();
+
+    assert.equal(votes1.yes, 1);
+    assert.equal(votes1.yesWeight, tokenBalance1);
+
+    assert.deepEqual(res.body, { voted: true, reason: 'Voted', weight: tokenBalance1 });
+
+
+    const usdcContract = new ethers.Contract(TOKEN_ADDRESS, abi, provider!); // USDC contract
+
+    const accountSigner = usdcContract.connect(account);
+
+    await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
+
+    const tokenBalance2 = await getTokenBalance(account.address, provider!);
+
+    await promiseTimeout(3000);
+
+    const votes2 = await activeProposal.getVotes();
+    assert.equal(votes2.yes, 1);
+    assert.equal(votes2.yesWeight, tokenBalance2);
+  });
+
+  it('Update Vote Weight After Token Transfer To Voted Wallet', async function() {
+    const TOKENS_TO_SEND = '3000';
+    // Create wallet
+    const account1 = new ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+    const account2 = new ethers.Wallet(accountList[1].secretKey.toString('hex'), provider);
+
+    // Get proposal
+    const activeProposal = new ProposalHelper;
+    await activeProposal.init();
+
+    // Check that proposal exists
+    assert.notEqual(activeProposal.id, null);
+
+    // Generate random nonce
+    const nonce1 = uuidv4();
+
+    const vote1 = `${activeProposal.id}.YES.${nonce1}`;
+    const signedMessage1 = await account1.signMessage(vote1);
+    
+    const res1 = await chai.request(app).post('/vote/cast').send({
+      vote: vote1,
+      walletAddress: account1.address,
+      voteSignature: signedMessage1,
+    });
+
+    const account1TokenBalance1 = await getTokenBalance(account1.address, provider!);
+
+    const votes1 = await activeProposal.getVotes();
+
+    assert.equal(votes1.yes, 1);
+    assert.equal(votes1.yesWeight, account1TokenBalance1);
+
+    assert.deepEqual(res1.body, { voted: true, reason: 'Voted', weight: account1TokenBalance1 });
+
+    // Generate random nonce
+    const nonce2 = uuidv4();
+
+    const vote2 = `${activeProposal.id}.NO.${nonce2}`;
+    const signedMessage2 = await account2.signMessage(vote2);
+    
+    const res2 = await chai.request(app).post('/vote/cast').send({
+      vote: vote2,
+      walletAddress: account2.address,
+      voteSignature: signedMessage2,
+    });
+
+    const account2TokenBalance1 = await getTokenBalance(account2.address, provider!);
+    const votes2 = await activeProposal.getVotes();
+
+    assert.equal(votes2.no, 1);
+    assert.equal(votes2.noWeight, account2TokenBalance1);
+
+    assert.deepEqual(res2.body, { voted: true, reason: 'Voted', weight: account2TokenBalance1 });
+
+    const usdcContract = new ethers.Contract(TOKEN_ADDRESS, abi, provider!); // USDC contract
+
+    const accountSigner = usdcContract.connect(account1);
+
+    await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
+
+    const account1TokenBalance2 = await getTokenBalance(account1.address, provider!);
+
+
+    await promiseTimeout(3000);
+
+    const votes3 = await activeProposal.getVotes();
+
+    assert.equal(votes3.yes, 1);
+    assert.equal(votes3.yesWeight, account1TokenBalance2);
   });
 });
 

@@ -94,7 +94,6 @@ export default class User {
   async getTokenBalance(): Promise<string> {
     const contract = new Contract(TOKEN_ADDRESS, abi, web3Wss.provider);
     return (await contract.balanceOf(this._walletAddress)).toString();
-
   }
 
   async getOrCreateUserDocument(): Promise<UserModel> {

@@ -2,6 +2,19 @@ import { ethers } from 'ethers';
 import proposal from '../models/proposal.model';
 import user from '../models/user.model';
 
+const abi = [
+  // Read-Only Functions
+  'function balanceOf(address owner) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+
+  // Authenticated Functions
+  'function transfer(address to, uint amount) returns (bool)',
+
+  // Events
+  'event Transfer(address indexed from, address indexed to, uint amount)',
+];
+
 const KEEP_ALIVE_CHECK_INTERVAL = 7500;
 const EXPECTED_PONG_BACK = 15000;
 
@@ -44,7 +57,7 @@ export default class Web3Service {
 
       this._provider!.on('block', (block) => {
         console.log('New block', block);
-        this._getTokenBalancesForActiveProposals;
+        this._getTokenBalancesForActiveProposals();
       });
     });
   
@@ -72,13 +85,15 @@ export default class Web3Service {
       let noWeightDelta: bigint = 0n;
       let abstainWeightDelta: bigint = 0n;
 
-      const activeUsers = await user.find({'votes.id': proposal.id});
+      const activeUsers = await user.find({'votes.proposal': proposal.id});
     
       // Loop through active users
       for(const user of activeUsers){
         const oldBalance = BigInt(user.tokenBalance);
 
-        const newBalance = BigInt(String(await this._provider!.getBalance(user.walletAddress)));
+        const contract = new ethers.Contract(process.env.TOKEN_ADDRESS, abi, this.provider!);
+
+        const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());
 
         // Compare old balance to new balance, return if same
         if(newBalance === oldBalance) return;
@@ -107,9 +122,8 @@ export default class Web3Service {
       proposal.votes.yesWeight = String(BigInt(proposal.votes.yesWeight) + yesWeightDelta);
       proposal.votes.noWeight = String(BigInt(proposal.votes.noWeight) + noWeightDelta);
       proposal.votes.abstainWeight = String(BigInt(proposal.votes.abstainWeight) + abstainWeightDelta);
-
+      
       await proposal.save();
-
     }
   }
 }

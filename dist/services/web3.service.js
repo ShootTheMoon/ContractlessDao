@@ -6,6 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ethers_1 = require("ethers");
 const proposal_model_1 = __importDefault(require("../models/proposal.model"));
 const user_model_1 = __importDefault(require("../models/user.model"));
+const abi = [
+    // Read-Only Functions
+    'function balanceOf(address owner) view returns (uint256)',
+    'function decimals() view returns (uint8)',
+    'function symbol() view returns (string)',
+    // Authenticated Functions
+    'function transfer(address to, uint amount) returns (bool)',
+    // Events
+    'event Transfer(address indexed from, address indexed to, uint amount)',
+];
 const KEEP_ALIVE_CHECK_INTERVAL = 7500;
 const EXPECTED_PONG_BACK = 15000;
 class Web3Service {
@@ -38,7 +48,7 @@ class Web3Service {
             // TODO: handle contract listeners setup + indexing
             this._provider.on('block', (block) => {
                 console.log('New block', block);
-                this._getTokenBalancesForActiveProposals;
+                this._getTokenBalancesForActiveProposals();
             });
         });
         this._provider._websocket.on('close', () => {
@@ -60,11 +70,12 @@ class Web3Service {
             let yesWeightDelta = 0n;
             let noWeightDelta = 0n;
             let abstainWeightDelta = 0n;
-            const activeUsers = await user_model_1.default.find({ 'votes.id': proposal.id });
+            const activeUsers = await user_model_1.default.find({ 'votes.proposal': proposal.id });
             // Loop through active users
             for (const user of activeUsers) {
                 const oldBalance = BigInt(user.tokenBalance);
-                const newBalance = BigInt(String(await this._provider.getBalance(user.walletAddress)));
+                const contract = new ethers_1.ethers.Contract(process.env.TOKEN_ADDRESS, abi, this.provider);
+                const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());
                 // Compare old balance to new balance, return if same
                 if (newBalance === oldBalance)
                     return;

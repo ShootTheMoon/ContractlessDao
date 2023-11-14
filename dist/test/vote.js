@@ -46,6 +46,11 @@ async function mineBlock() {
         id: new Date().getTime()
     });
 }
+function promiseTimeout(delay) {
+    return new Promise(function (resolve, reject) {
+        setTimeout(resolve, delay);
+    });
+}
 async function getTokenBalance(walletAddress, provider) {
     const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
     const balance = (await usdcContract.balanceOf(walletAddress)).toString();
@@ -82,12 +87,15 @@ async function getTokenBalance(walletAddress, provider) {
         await transactionResponse.wait(); // Wait for the transaction to be mined
         const usdcWhaleSigner = provider.getSigner(USDC_WHALE_ACCOUNT); // Get the unlocked whale signer
         const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, usdcWhaleSigner); // USDC contract
-        await usdcContract.transfer(accountList[0].address, '10000'); // Send X tokens to account 0
+        await usdcContract.transfer(accountList[0].address, '1000000'); // Send X tokens to account 0
     });
     beforeEach('Clear Test Database Collection', async function () {
         await mongoose_1.default.connection.dropCollection('users');
     });
-    beforeEach('Create a new proposal', async function () {
+    beforeEach('Clear Test Database Collection', async function () {
+        await mongoose_1.default.connection.dropCollection('users');
+    });
+    beforeEach('Drop All Proposals', async function () {
         await mongoose_1.default.connection.dropCollection('proposals');
     });
     (0, mocha_1.it)('Successfully Cast One Vote YES From Fresh Wallet', async function () {
@@ -369,6 +377,85 @@ async function getTokenBalance(walletAddress, provider) {
         assert_1.default.equal(votes.no, 0);
         assert_1.default.equal(votes.noWeight, '0');
         assert_1.default.deepEqual(res.body, { voted: false, reason: 'Invalid nonce' });
+    });
+    (0, mocha_1.it)('Update Vote Weight After Token Transfer To Unvoted Wallet', async function () {
+        const TOKENS_TO_SEND = '5000';
+        // Create wallet
+        const account = new ethers_1.ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+        // Get proposal
+        const activeProposal = new proposalHelpers_1.default;
+        await activeProposal.init();
+        // Check that proposal exists
+        assert_1.default.notEqual(activeProposal.id, null);
+        // Generate random nonce
+        const nonce = (0, uuid_1.v4)();
+        const vote = `${activeProposal.id}.YES.${nonce}`;
+        const signedMessage = await account.signMessage(vote);
+        const res = await chai_1.default.request(app_1.default).post('/vote/cast').send({
+            vote: vote,
+            walletAddress: account.address,
+            voteSignature: signedMessage,
+        });
+        const tokenBalance1 = await getTokenBalance(account.address, provider);
+        const votes1 = await activeProposal.getVotes();
+        assert_1.default.equal(votes1.yes, 1);
+        assert_1.default.equal(votes1.yesWeight, tokenBalance1);
+        assert_1.default.deepEqual(res.body, { voted: true, reason: 'Voted', weight: tokenBalance1 });
+        const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
+        const accountSigner = usdcContract.connect(account);
+        await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
+        const tokenBalance2 = await getTokenBalance(account.address, provider);
+        await promiseTimeout(3000);
+        const votes2 = await activeProposal.getVotes();
+        assert_1.default.equal(votes2.yes, 1);
+        assert_1.default.equal(votes2.yesWeight, tokenBalance2);
+    });
+    (0, mocha_1.it)('Update Vote Weight After Token Transfer To Voted Wallet', async function () {
+        const TOKENS_TO_SEND = '3000';
+        // Create wallet
+        const account1 = new ethers_1.ethers.Wallet(accountList[0].secretKey.toString('hex'), provider);
+        const account2 = new ethers_1.ethers.Wallet(accountList[1].secretKey.toString('hex'), provider);
+        // Get proposal
+        const activeProposal = new proposalHelpers_1.default;
+        await activeProposal.init();
+        // Check that proposal exists
+        assert_1.default.notEqual(activeProposal.id, null);
+        // Generate random nonce
+        const nonce1 = (0, uuid_1.v4)();
+        const vote1 = `${activeProposal.id}.YES.${nonce1}`;
+        const signedMessage1 = await account1.signMessage(vote1);
+        const res1 = await chai_1.default.request(app_1.default).post('/vote/cast').send({
+            vote: vote1,
+            walletAddress: account1.address,
+            voteSignature: signedMessage1,
+        });
+        const account1TokenBalance1 = await getTokenBalance(account1.address, provider);
+        const votes1 = await activeProposal.getVotes();
+        assert_1.default.equal(votes1.yes, 1);
+        assert_1.default.equal(votes1.yesWeight, account1TokenBalance1);
+        assert_1.default.deepEqual(res1.body, { voted: true, reason: 'Voted', weight: account1TokenBalance1 });
+        // Generate random nonce
+        const nonce2 = (0, uuid_1.v4)();
+        const vote2 = `${activeProposal.id}.NO.${nonce2}`;
+        const signedMessage2 = await account2.signMessage(vote2);
+        const res2 = await chai_1.default.request(app_1.default).post('/vote/cast').send({
+            vote: vote2,
+            walletAddress: account2.address,
+            voteSignature: signedMessage2,
+        });
+        const account2TokenBalance1 = await getTokenBalance(account2.address, provider);
+        const votes2 = await activeProposal.getVotes();
+        assert_1.default.equal(votes2.no, 1);
+        assert_1.default.equal(votes2.noWeight, account2TokenBalance1);
+        assert_1.default.deepEqual(res2.body, { voted: true, reason: 'Voted', weight: account2TokenBalance1 });
+        const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
+        const accountSigner = usdcContract.connect(account1);
+        await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
+        const account1TokenBalance2 = await getTokenBalance(account1.address, provider);
+        await promiseTimeout(3000);
+        const votes3 = await activeProposal.getVotes();
+        assert_1.default.equal(votes3.yes, 1);
+        assert_1.default.equal(votes3.yesWeight, account1TokenBalance2);
     });
 });
 //# sourceMappingURL=vote.js.map
