@@ -75,17 +75,11 @@ class User {
             proposalDocument.votes.abstainWeight = String(BigInt(proposalDocument.votes.abstainWeight) + BigInt(this._tokenBalance));
         }
         await proposalDocument.save();
-        return { voted: true, reason: 'Voted' };
+        return { voted: true, reason: 'Voted', weight: this._tokenBalance };
     }
     async getTokenBalance() {
         const contract = new ethers_1.Contract(TOKEN_ADDRESS, abi, app_1.web3Wss.provider);
-        try {
-            return await contract.balanceOf(this._walletAddress);
-        }
-        catch (err) {
-            console.log(err);
-            return '0';
-        }
+        return (await contract.balanceOf(this._walletAddress)).toString();
     }
     async getOrCreateUserDocument() {
         // Create user if not found

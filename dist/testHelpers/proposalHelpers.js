@@ -34,8 +34,11 @@ class ProposalHelper {
         });
         this._id = this._document.id;
     }
-    get document() {
-        return this._document;
+    async getVotes() {
+        return (await this.getDocument()).votes;
+    }
+    async getDocument() {
+        return await proposal_model_1.default.findOne({ 'id': this._id });
     }
     get id() {
         return this._id;

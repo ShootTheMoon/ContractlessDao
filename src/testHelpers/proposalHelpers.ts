@@ -5,22 +5,19 @@ import { v4 as uuidv4 } from 'uuid';
 import mongoose from 'mongoose';
 import { ProposalModel } from '../models/proposal.model';
 
-
-const {MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST} = process.env;
-
+const { MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST } = process.env;
 
 mongoose.connect(`mongodb+srv://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_SERVER}/${DATABASE_TEST}`);
 
-
-export default class ProposalHelper{
+export default class ProposalHelper {
   private _document: ProposalModel | null = null;
   private _id: typeof uuidv4 | null = null;
 
-  public async init(){
+  public async init() {
     await this.createNewProposal();
   }
 
-  private async createNewProposal(){
+  private async createNewProposal() {
     this._document = await proposal.create({
       id: uuidv4(),
       proposal: 'Test proposal',
@@ -38,11 +35,15 @@ export default class ProposalHelper{
     this._id = this._document.id;
   }
 
-  get document(): ProposalModel | null{
-    return this._document;
+  async getVotes(): Promise<{ yes: number; yesWeight: string; no: number; noWeight: string; abstain: number; abstainWeight: string }> {
+    return (await this.getDocument())!.votes;
   }
 
-  get id(): typeof uuidv4 | null{
+  async getDocument(): Promise<ProposalModel | null> {
+    return await proposal.findOne({'id': this._id});
+  }
+
+  get id(): typeof uuidv4 | null {
     return this._id;
   }
 }

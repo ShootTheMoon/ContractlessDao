@@ -52,7 +52,7 @@ export default class User {
     this._userDocument = document;
   }
 
-  async castVote(proposalId: string, decision: VoteTypes, nonce: string): Promise<{ voted: boolean; reason: string }> {
+  async castVote(proposalId: string, decision: VoteTypes, nonce: string): Promise<{ voted: boolean; reason: string } | { voted: boolean; reason: string, weight: string } > {
     const proposalDocument = await proposal.findOne({ id: proposalId, active: true });
 
     // Check if proposal is valid
@@ -88,17 +88,12 @@ export default class User {
     }
 
     await proposalDocument.save();
-    return { voted: true, reason: 'Voted' };
+    return { voted: true, reason: 'Voted', weight: this._tokenBalance};
   }
 
   async getTokenBalance(): Promise<string> {
     const contract = new Contract(TOKEN_ADDRESS, abi, web3Wss.provider);
-    try{
-      return await contract.balanceOf(this._walletAddress);
-    }catch(err){
-      console.log(err);
-      return '0';
-    }
+    return (await contract.balanceOf(this._walletAddress)).toString();
 
   }
 
