@@ -4,16 +4,15 @@
   "description": "",
   "main": "src/app.ts",
   "scripts": {
-    "start": "export ENV=production && nodemon dist/app.js",
+    "start": "set ENV=production && nodemon dist/app.js",
+    "start-unix": "export ENV=production && nodemon dist/app.js",
     "build": "tsc",
     "dev": "set ENV=development&& nodemon src/app.ts",
     "dev-unix": "export ENV=development && nodemon src/app.ts",
     "test": "set FORK=test&& mocha --timeout 20000 --require mocha-suppress-logs ./dist/test",
     "test-unix": "export FORK=test&& mocha --timeout 20000 --require mocha-suppress-logs ./dist/test",
     "create-proposal-test": "export ENV=development && node dist/scripts/adminTools.js create-proposal",
-    "create-proposal": "export ENV=production && node dist/scripts/adminTools.js create-proposal",
-    "vote-fresh": "export ENV=development && node dist/scripts/adminTools.js vote-fresh",
-    "vote": "export ENV=development && node dist/scripts/adminTools.js vote"
+    "create-proposal": "export ENV=production && node dist/scripts/adminTools.js create-proposal"
   },
   "author": "Moon Dan",
   "license": "ISC",
@@ -30,12 +29,10 @@
     "chai-http": "^4.4.0",
     "eslint": "^8.48.0",
     "ganache-cli": "^6.12.2",
-    "hardhat": "^2.19.0",
     "mocha": "^10.2.0",
     "mocha-suppress-logs": "^0.4.1",
     "nodemon": "^3.0.1",
     "prompt": "^1.3.0",
-    "prompts": "^2.4.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },

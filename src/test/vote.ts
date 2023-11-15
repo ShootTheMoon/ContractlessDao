@@ -631,7 +631,6 @@ describe('Vote Tests', async function() {
 
     const account1TokenBalance2 = await getTokenBalance(account1.address, provider!);
 
-
     await promiseTimeout(3000);
 
     const votes3 = await activeProposal.getVotes();
