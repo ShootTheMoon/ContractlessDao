@@ -7,6 +7,8 @@ import { isVote } from '../types/user.types';
 export async function post_castVote(req: express.Request, res: express.Response) {
   const { walletAddress, voteSignature, vote } = req.body;
 
+  if(!walletAddress || !voteSignature || !vote) return res.send({voted: false, reason: 'Missing route parameters'});
+  
   const signingAddress = ethers.utils.verifyMessage(vote, voteSignature);
 
   // Check if signature is valid
