@@ -51,7 +51,7 @@ class Web3Service {
                 const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());
                 // Compare old balance to new balance, return if same
                 if (newBalance === oldBalance)
-                    return;
+                    continue;
                 // Update user token balance
                 user.tokenBalance = String(newBalance);
                 await user.save();

@@ -27,7 +27,7 @@ const abi = [
     // Events
     'event Transfer(address indexed from, address indexed to, uint amount)',
 ];
-const { MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST, ETH_JSON_RPC_URL, TOKEN_ADDRESS } = process.env;
+const { MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST, ETH_JSON_RPC_URL, USDC_ADDRESS } = process.env;
 const USDC_WHALE_ACCOUNT = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; // Make sure this is a wallet and not a smart contract
 const forkOptions = {
     fork: ETH_JSON_RPC_URL,
@@ -52,7 +52,7 @@ function promiseTimeout(delay) {
     });
 }
 async function getTokenBalance(walletAddress, provider) {
-    const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
+    const usdcContract = new ethers_1.ethers.Contract(USDC_ADDRESS, abi, provider); // USDC contract
     const balance = (await usdcContract.balanceOf(walletAddress)).toString();
     return balance;
 }
@@ -63,7 +63,7 @@ async function getTokenBalance(walletAddress, provider) {
         return new Promise((resolve) => {
             server.listen(port, async (err, blockchain) => {
                 console.log('Forking successful on port:', port);
-                app_2.web3Wss.init(`ws://localhost:${port}`, TOKEN_ADDRESS);
+                app_2.web3Wss.init(`ws://localhost:${port}`);
                 provider = app_2.web3Wss.provider;
                 // Retrieve accounts
                 const accounts = blockchain ? blockchain.accounts : null;
@@ -86,7 +86,7 @@ async function getTokenBalance(walletAddress, provider) {
         const transactionResponse = await signer.sendTransaction(tx); // Send the txn
         await transactionResponse.wait(); // Wait for the transaction to be mined
         const usdcWhaleSigner = provider.getSigner(USDC_WHALE_ACCOUNT); // Get the unlocked whale signer
-        const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, usdcWhaleSigner); // USDC contract
+        const usdcContract = new ethers_1.ethers.Contract(USDC_ADDRESS, abi, usdcWhaleSigner); // USDC contract
         await usdcContract.transfer(accountList[0].address, '1000000'); // Send X tokens to account 0
     });
     beforeEach('Clear Test Database Collection', async function () {
@@ -401,7 +401,7 @@ async function getTokenBalance(walletAddress, provider) {
         assert_1.default.equal(votes1.yes, 1);
         assert_1.default.equal(votes1.yesWeight, tokenBalance1);
         assert_1.default.deepEqual(res.body, { voted: true, reason: 'Voted', weight: tokenBalance1 });
-        const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
+        const usdcContract = new ethers_1.ethers.Contract(USDC_ADDRESS, abi, provider); // USDC contract
         const accountSigner = usdcContract.connect(account);
         await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
         const tokenBalance2 = await getTokenBalance(account.address, provider);
@@ -448,7 +448,7 @@ async function getTokenBalance(walletAddress, provider) {
         assert_1.default.equal(votes2.no, 1);
         assert_1.default.equal(votes2.noWeight, account2TokenBalance1);
         assert_1.default.deepEqual(res2.body, { voted: true, reason: 'Voted', weight: account2TokenBalance1 });
-        const usdcContract = new ethers_1.ethers.Contract(TOKEN_ADDRESS, abi, provider); // USDC contract
+        const usdcContract = new ethers_1.ethers.Contract(USDC_ADDRESS, abi, provider); // USDC contract
         const accountSigner = usdcContract.connect(account1);
         await accountSigner.transfer(accountList[1].address, TOKENS_TO_SEND); // Send X tokens to account 2
         const account1TokenBalance2 = await getTokenBalance(account1.address, provider);
