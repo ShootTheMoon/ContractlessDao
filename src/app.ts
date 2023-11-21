@@ -7,11 +7,11 @@ import {router as proposalRouter} from './routes/proposal.routes';
 import {router as userRouter} from './routes/user.routes'; 
 import mongoose from 'mongoose';
 
-const {ENV, MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_PRODUCTION, DATABASE_TEST, WSS_URL, FORK, TOKEN_ADDRESS, PORT} = process.env;
+const {ENV, MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_PRODUCTION, DATABASE_TEST, JSON_RPC_URL, FORK, PORT} = process.env;
 
 export const web3Wss = new Web3Service();
 
-if(FORK != 'test') web3Wss.init(WSS_URL, TOKEN_ADDRESS);
+if(FORK != 'test') web3Wss.init(JSON_RPC_URL);
 
 const app = express();
 

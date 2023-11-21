@@ -9,7 +9,7 @@ declare global {
       MONGODB_PASSWORD: string;
       MONGODB_SERVER: string;
       WSS_URL: string;
-      JSON_RPC_PROVIDER: string;
+      JSON_RPC_URL: string;
     }
   }
 }
