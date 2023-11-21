@@ -37,6 +37,7 @@ export default class Web3Service {
     
     setInterval(() => {
       this._getTokenBalancesForActiveProposals();
+      console.log('Scanning...');
     }, CHECK_CHAIN_INTERVAL);
   }
 
@@ -53,7 +54,6 @@ export default class Web3Service {
       let abstainWeightDelta: bigint = 0n;
 
       const activeUsers = await user.find({'votes.proposal': proposal.id});
-    
       // Loop through active users
       for(const user of activeUsers){
         const oldBalance = BigInt(user.tokenBalance);
@@ -63,13 +63,11 @@ export default class Web3Service {
         const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());
 
         // Compare old balance to new balance, return if same
-        if(newBalance === oldBalance) return;
+        if(newBalance === oldBalance) continue;
 
         // Update user token balance
         user.tokenBalance = String(newBalance);
-
         await user.save();
-        
         // Update the vote weights
         for(const vote of user.votes){
           if (vote.proposal == proposal.id){

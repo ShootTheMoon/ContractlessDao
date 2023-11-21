@@ -10,6 +10,7 @@ declare global {
       MONGODB_SERVER: string;
       WSS_URL: string;
       JSON_RPC_URL: string;
+      USDC_ADDRESS: string;
     }
   }
 }

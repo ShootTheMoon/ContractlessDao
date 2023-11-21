@@ -27,10 +27,10 @@ const abi = [
     // Events
     'event Transfer(address indexed from, address indexed to, uint amount)',
 ];
-const { MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST, JSON_RPC_URL, TOKEN_ADDRESS } = process.env;
+const { MONGODB_PASSWORD, MONGODB_SERVER, MONGODB_USERNAME, DATABASE_TEST, ETH_JSON_RPC_URL, TOKEN_ADDRESS } = process.env;
 const USDC_WHALE_ACCOUNT = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; // Make sure this is a wallet and not a smart contract
 const forkOptions = {
-    fork: JSON_RPC_URL,
+    fork: ETH_JSON_RPC_URL,
     ws: true,
     locked: true,
     unlocked_accounts: [USDC_WHALE_ACCOUNT]
