@@ -15,7 +15,7 @@ const abi = [
   'event Transfer(address indexed from, address indexed to, uint amount)',
 ];
 
-const CHECK_CHAIN_INTERVAL = 7500;
+const CHECK_CHAIN_INTERVAL = 45000;
 
 export default class Web3Service {
   private _rpcUrl: string | undefined;
@@ -57,7 +57,7 @@ export default class Web3Service {
       // Loop through active users
       for(const user of activeUsers){
         const oldBalance = BigInt(user.tokenBalance);
-
+        console.log(user.walletAddress, oldBalance);
         const contract = new ethers.Contract(process.env.TOKEN_ADDRESS, abi, this.provider!);
 
         const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());

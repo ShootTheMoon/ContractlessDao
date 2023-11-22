@@ -16,7 +16,7 @@ const abi = [
     // Events
     'event Transfer(address indexed from, address indexed to, uint amount)',
 ];
-const CHECK_CHAIN_INTERVAL = 7500;
+const CHECK_CHAIN_INTERVAL = 60000;
 class Web3Service {
     get provider() {
         return this._provider;
@@ -47,6 +47,7 @@ class Web3Service {
             // Loop through active users
             for (const user of activeUsers) {
                 const oldBalance = BigInt(user.tokenBalance);
+                console.log(user.walletAddress, oldBalance);
                 const contract = new ethers_1.ethers.Contract(process.env.TOKEN_ADDRESS, abi, this.provider);
                 const newBalance = BigInt((await contract.balanceOf(user.walletAddress)).toString());
                 // Compare old balance to new balance, return if same
