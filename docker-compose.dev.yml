@@ -1,0 +1,39 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      - NODE_ENV=development
+    read_only: false
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/next.d.ts:/app/next.d.ts
+      - ./frontend/next-env.d.ts:/app/next-env.d.ts
+      - ./frontend/next.config.js:/app/next.config.js
+    read_only: false
+    restart: always
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - 80:80
+      - 443:443
+    read_only: false
+    restart: always
+
+
