@@ -28,12 +28,12 @@ interface Votes {
 }
 
 
-interface ProposalModel extends Document {
+interface ProposalType extends Document {
     id: typeof uuidv4,
     proposal: string,
     active: boolean,
     votes: Votes
 } 
 
-export { ProposalModel };
-export default model<ProposalModel>('proposal', proposal);
+export { ProposalType };
+export default model<ProposalType>('proposal', proposal);

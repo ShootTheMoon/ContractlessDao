@@ -1,0 +1,42 @@
+image: docker:stable
+
+services:
+  - docker:dind
+
+stages:
+  - Build Images
+  - Tests
+
+variables:
+  BACKEND_CONTAINER_NAME: $CI_JOB_ID
+  BACKEND_IMAGE_NAME: "$CI_REGISTRY_IMAGE/backend"
+
+# Helpers
+.docker_login:
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+# Jobs
+Build Dashboard Backend Test Image:
+  stage: Build Images
+  extends: .docker_login
+  script:
+    - docker build -t $BACKEND_IMAGE_NAME:$CI_COMMIT_SHORT_SHA ./backend
+    - docker push $BACKEND_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+
+Dashboard Backend JEST Tests:
+  stage: Tests
+  extends: .docker_login
+  script:
+    - docker pull $BACKEND_IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker run --name $BACKEND_CONTAINER_NAME $BACKEND_IMAGE_NAME:$CI_COMMIT_SHORT_SHA bash -c "npm run test"
+    - mkdir -p ./backend/coverage
+    - docker cp $BACKEND_CONTAINER_NAME:/home/app/coverage/cobertura-coverage.xml ./backend/coverage/cobertura-coverage.xml
+    - docker rm -f $BACKEND_CONTAINER_NAME
+  artifacts:
+    paths:
+      - backend/coverage/cobertura-coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage/cobertura-coverage.xml

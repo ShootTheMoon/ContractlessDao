@@ -4,4 +4,4 @@ export const voteTypes = ['YES', 'NO', 'ABSTAIN'] as const;
 
 type Votes = (typeof voteTypes)[number];
 
-export const isVote = (x: any): x is Votes => voteTypes.includes(x);
+export const isVote = (x: Votes): x is Votes => voteTypes.includes(x);

@@ -1,45 +1,27 @@
-import { ethers } from 'ethers';
 import express from 'express';
-import User from '../services/user.service';
-import Nonce from '../services/nonce.service';
-import { isVote } from '../types/user.types';
+import User from '#services/user.service';
+import sendResponse from '#utils/response';
 
-export async function post_castVote(req: express.Request, res: express.Response) {
-  const { walletAddress, voteSignature, vote } = req.body;
+/**
+ * Handles the POST request for casting a vote on a proposal. It extracts the wallet address, nonce, decision,
+ * and proposal ID from the request body. Then, it initializes a User instance for the given wallet address,
+ * prepares it for voting by setting up the necessary user details, and finally casts a vote on the specified proposal
+ * with the provided decision and nonce. If successful, it responds with a 201 status code and details of the vote cast.
+ *
+ * @param {express.Request} req - The request object, containing the walletAddress, nonce, decision, and proposal
+ * in the body.
+ * @param {express.Response} res - The response object used to send back the HTTP response.
+ * @async
+ * @returns {Promise<void>}
+ */
+export async function post_castVote(req: express.Request, res: express.Response): Promise<void> {
+  const { walletAddress, nonce, decision, proposal } = req.body;
 
-  if(!walletAddress || !voteSignature || !vote) return res.send({voted: false, reason: 'Missing route parameters'});
-  
-  const signingAddress = ethers.utils.verifyMessage(vote, voteSignature);
+  const user = new User(walletAddress);
 
-  // Check if signature is valid
-  if (signingAddress.toLowerCase() == walletAddress.toLowerCase()) {
-    const proposal = vote.split('.')[0];
-    const decision = vote.split('.')[1];
+  await user.initForVoting();
 
-    // check if decision is valid type
-    if(!isVote(decision)){
-      return res.send({voted: false, reason: 'Invalid vote'});
-    }
+  const vote = await user.castVote(proposal, decision, nonce);
 
-    const nonce = new Nonce(vote.split('.')[2]);
-
-    // check if nonce is type uuid
-    if(!nonce.nonceValidity()){
-      return res.send({voted: false, reason: 'Invalid nonce'});
-    }
-
-    // check if nonce has been used before
-    if(!(await nonce.uniqueNonce())){
-      return res.send({voted: false, reason: 'Duplicate nonce'});
-    }
-    
-    const user = new User(walletAddress);
-
-    await user.init();
-
-    const voted = await user.castVote(proposal, decision, nonce.nonce);
-
-    return res.send(voted);
-  }
-  return res.send({voted: false, reason: 'Invalid wallet signature'});
+  sendResponse(res, 201, true,'Voted', vote);
 }

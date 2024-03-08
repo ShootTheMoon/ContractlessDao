@@ -1,5 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
-import { VoteTypes } from '../types/user.types';
+import { VoteTypes } from '#types/user.types';
 
 const vote = new Schema({
   proposal: {type: String, required: true, sparse: true},

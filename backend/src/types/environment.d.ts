@@ -11,7 +11,6 @@ declare global {
       WSS_URL: string;
       JSON_RPC_URL: string;
       USDC_ADDRESS: string;
-      FORT: string | undefined;
     }
   }
 }
